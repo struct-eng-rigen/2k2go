@@ -3739,6 +3739,7 @@ export const CardsReview = ({
 						</p>
 					)}
 					{renderReviewSummarySection()}
+					{renderSessionLanguageAndHelpSection()}
 				</div>
 			</div>
 
