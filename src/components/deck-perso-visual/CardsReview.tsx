@@ -30,7 +30,7 @@ import {
 	TooltipContent,
 	TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useIsEnglishApp } from "@/contexts/AppLocaleContext";
+import { useAppLocale } from "@/contexts/AppLocaleContext";
 import {
 	AUDIO_FILES,
 	type AudioUrls,
@@ -495,9 +495,10 @@ const isSessionDueCardsCacheFresh = (
 
 const loadSessionDueCardsWithDedup = (
 	cacheScope: string,
+	locale: "fr" | "en",
 ): Promise<Awaited<ReturnType<typeof fetchDueCardsByReviewTypes>>> => {
 	if (IS_VITEST_RUNTIME) {
-		return fetchDueCardsByReviewTypes(ALL_REVIEW_TYPES);
+		return fetchDueCardsByReviewTypes(ALL_REVIEW_TYPES, 40, locale);
 	}
 
 	const inFlightRequest = sessionDueCardsInFlightByScope.get(cacheScope);
@@ -505,7 +506,7 @@ const loadSessionDueCardsWithDedup = (
 		return inFlightRequest;
 	}
 
-	const request = fetchDueCardsByReviewTypes(ALL_REVIEW_TYPES);
+	const request = fetchDueCardsByReviewTypes(ALL_REVIEW_TYPES, 40, locale);
 	sessionDueCardsInFlightByScope.set(cacheScope, request);
 
 	void request.finally(() => {
@@ -607,7 +608,8 @@ export const CardsReview = ({
 	const navigate = useNavigate();
 	const { playFail, playValider, playFinish, resume, isInitialized } =
 		useAudio();
-	const isEnglishApp = useIsEnglishApp();
+	const { locale, setLocale } = useAppLocale();
+	const isEnglishApp = locale === "en";
 	const { user, loading: isAuthLoading } = useAuth();
 	const { profile } = useProfile(undefined, user?.id);
 	const { masteredCards, totalCards } = useMissionProgress();
@@ -625,8 +627,8 @@ export const CardsReview = ({
 	const usePlainHtmlSessionChrome =
 		isSessionLayout && sessionChromeVariant === "plain_html";
 	const dueCardsCacheScope = isGuestLocalReviewMode
-		? `guest_local:${SESSION_DUE_CARDS_CACHE_VERSION}`
-		: `auth:${user?.id ?? "guest"}:${SESSION_DUE_CARDS_CACHE_VERSION}`;
+		? `guest_local:${locale}:${SESSION_DUE_CARDS_CACHE_VERSION}`
+		: `auth:${user?.id ?? "guest"}:${locale}:${SESSION_DUE_CARDS_CACHE_VERSION}`;
 	const sessionPeerLabel = "contact";
 	const hasPreviewCards = Array.isArray(previewCards);
 	const shouldUseSessionDueCardsCache =
@@ -678,6 +680,20 @@ export const CardsReview = ({
 		[dueCardsCacheScope, shouldUseSessionDueCardsCache],
 	);
 
+	const handleSessionLocaleChange = useCallback(
+		(nextLocale: "fr" | "en") => {
+			if (nextLocale === locale) {
+				return;
+			}
+
+			setLocale(nextLocale);
+			if (typeof window !== "undefined") {
+				window.location.reload();
+			}
+		},
+		[locale, setLocale],
+	);
+
 	const fetchCards = useCallback(async () => {
 		if (!hasPreviewCards && !shouldUseDemoData && isAuthLoading) {
 			setIsLoadingCards(true);
@@ -704,7 +720,7 @@ export const CardsReview = ({
 		}
 
 		if (isGuestLocalReviewMode) {
-			const guestCards = getGuestFoundationDueCards();
+			const guestCards = getGuestFoundationDueCards(undefined, Date.now(), locale);
 
 			if (requestIdRef.current !== requestId) return;
 			setCards(guestCards);
@@ -741,7 +757,10 @@ export const CardsReview = ({
 				}
 			}
 
-			const result = await loadSessionDueCardsWithDedup(dueCardsCacheScope);
+			const result = await loadSessionDueCardsWithDedup(
+				dueCardsCacheScope,
+				locale,
+			);
 			if (requestIdRef.current !== requestId) return;
 
 			if (!result.ok) {
@@ -778,6 +797,7 @@ export const CardsReview = ({
 		hasPreviewCards,
 		isAuthLoading,
 		isGuestLocalReviewMode,
+		locale,
 		previewCards,
 		shouldUseSessionDueCardsCache,
 		shouldUseDemoData,
@@ -3439,6 +3459,48 @@ export const CardsReview = ({
 						{reviewSummaryCounts.reviewCards}
 					</button>
 				</div>
+
+				<label
+					className={
+						usePlainHtmlSessionChrome
+							? "mt-1"
+							: "mt-1 text-[11px] text-muted-foreground opacity-70"
+					}
+					style={
+						usePlainHtmlSessionChrome
+							? {
+									fontSize: "13.3333px",
+									fontFamily: "Arial, sans-serif",
+									color: "#000000",
+							  }
+							: undefined
+					}
+				>
+					language :{" "}
+					<select
+						value={locale}
+						onChange={(event) => {
+							handleSessionLocaleChange(
+								event.target.value === "fr" ? "fr" : "en",
+							);
+						}}
+						style={
+							usePlainHtmlSessionChrome
+								? {
+										font: "inherit",
+										color: "inherit",
+										backgroundColor: "#efefef",
+										border: "1px solid #000000",
+										borderRadius: "3px",
+										padding: "1px 6px",
+								  }
+								: undefined
+						}
+					>
+						<option value="fr">french</option>
+						<option value="en">english</option>
+					</select>
+				</label>
 
 				<a
 					href="/app/why-2000-to-go"

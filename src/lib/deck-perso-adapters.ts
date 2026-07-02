@@ -6,12 +6,17 @@
  */
 
 import { createClient, type SupabaseClient } from "@supabase/supabase-js";
-import { foundation2kDeck } from "@/data/foundation2kDeck";
+import {
+	foundation2kDeck,
+	getFoundation2kDeck,
+	type Foundation2kCard,
+} from "@/data/foundation2kDeck";
 import { buildCollectedCardSourceLinkPath } from "@/data/immersionVideoRouting";
 import type { Database } from "@/integrations/supabase/types";
 import {
 	resolvePreferredFoundationMedia,
 } from "@/lib/foundationDeckMedia";
+import type { AppLocale } from "@/lib/appLocale";
 import { resolveMediaUrl } from "@/lib/mediaUrl";
 import type { GetDueCardsV2Row } from "@/lib/supabase/rpc";
 import { repairMojibake } from "@/lib/textEncoding";
@@ -127,6 +132,57 @@ foundation2kDeck.forEach((card) => {
 	FOUNDATION_FOCUS_BY_WORD.set(key, focusRank);
 });
 
+const FOUNDATION_CARD_BY_LOCALE_AND_RANK: Record<
+	AppLocale,
+	Map<number, Foundation2kCard>
+> = {
+	fr: new Map(getFoundation2kDeck("fr").map((card) => [card.frequencyRank, card])),
+	en: new Map(getFoundation2kDeck("en").map((card) => [card.frequencyRank, card])),
+};
+
+const FOUNDATION_CARD_BY_LOCALE_AND_WORD: Record<
+	AppLocale,
+	Map<string, Foundation2kCard>
+> = {
+	fr: new Map(
+		getFoundation2kDeck("fr").map((card) => [normalizeFocusWord(card.wordAr), card]),
+	),
+	en: new Map(
+		getFoundation2kDeck("en").map((card) => [normalizeFocusWord(card.wordAr), card]),
+	),
+};
+
+const readOptionalNumber = (value: unknown): number | null => {
+	if (typeof value === "number" && Number.isFinite(value)) {
+		return value;
+	}
+
+	return null;
+};
+
+const resolveLocalizedFoundationCard = (
+	record: DueCardRecord,
+	baseWord: string,
+	locale: AppLocale,
+): Foundation2kCard | null => {
+	const frequencyRank = readOptionalNumber(
+		(record as { frequency_rank?: unknown }).frequency_rank,
+	);
+	if (frequencyRank != null) {
+		const cardByRank = FOUNDATION_CARD_BY_LOCALE_AND_RANK[locale].get(
+			Math.floor(frequencyRank),
+		);
+		if (cardByRank) {
+			return cardByRank;
+		}
+	}
+
+	const wordKey = normalizeFocusWord(baseWord);
+	return wordKey
+		? (FOUNDATION_CARD_BY_LOCALE_AND_WORD[locale].get(wordKey) ?? null)
+		: null;
+};
+
 const coerceFocusValue = (value: unknown): string | undefined => {
 	if (typeof value === "number" && Number.isFinite(value)) {
 		return String(value);
@@ -160,21 +216,13 @@ const resolveFocusValue = (
 	const focusFromDeck = key ? FOUNDATION_FOCUS_BY_WORD.get(key) : undefined;
 	return focusFromDeck != null ? String(focusFromDeck) : undefined;
 };
-
-const readOptionalNumber = (value: unknown): number | null => {
-	if (typeof value === "number" && Number.isFinite(value)) {
-		return value;
-	}
-
-	return null;
-};
-
 /**
  * Transforms a Supabase DueCardRecord to VocabCard format.
  */
 export function supabaseCardToVocabCard(
 	record: DueCardRecord,
 	index: number,
+	locale: AppLocale = "fr",
 ): VocabCard {
 	const readOptionalString = (value: unknown): string | undefined => {
 		if (typeof value !== "string") {
@@ -255,6 +303,9 @@ export function supabaseCardToVocabCard(
 	const foundationFrequencyRank = readOptionalNumber(
 		(record as { frequency_rank?: unknown }).frequency_rank,
 	);
+	const localizedFoundationCard = isFoundationMediaCard
+		? resolveLocalizedFoundationCard(record, baseArabic, locale)
+		: null;
 	const foundationMedia = isFoundationMediaCard
 		? resolvePreferredFoundationMedia({
 				frequencyRank: foundationFrequencyRank,
@@ -373,17 +424,19 @@ export function supabaseCardToVocabCard(
 		tags: tags.length > 0 ? tags : ["Vocab"],
 		sentBase: stripHarakat(sentenceAr),
 		sentFull: sentenceAr,
-		sentFrench: sentenceFr,
+		sentFrench: localizedFoundationCard?.exampleSentenceFr ?? sentenceFr,
 		vocabBase: stripHarakat(baseArabic),
 		vocabFull: baseArabic,
-		vocabDef: repairMojibake(
-			record.word_fr ??
-				((record as { translation?: unknown }).translation as
-					| string
-					| null
-					| undefined) ??
-				sentenceFr,
-		),
+		vocabDef:
+			localizedFoundationCard?.wordFr ??
+			repairMojibake(
+				record.word_fr ??
+					((record as { translation?: unknown }).translation as
+						| string
+						| null
+						| undefined) ??
+					sentenceFr,
+			),
 		image: imageUrl,
 		vocabAudioUrl,
 		sentenceAudioUrl,

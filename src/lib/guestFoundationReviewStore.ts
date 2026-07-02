@@ -1,4 +1,5 @@
-import { foundation2kDeck } from "@/data/foundation2kDeck";
+import { foundation2kDeck, getFoundation2kDeck } from "@/data/foundation2kDeck";
+import type { AppLocale } from "@/lib/appLocale";
 import type { VocabCard } from "@/lib/deck-perso-adapters";
 import { getGuestId } from "@/lib/guestSession";
 import type { SearchCardsV2Row } from "@/lib/supabase/rpc";
@@ -239,8 +240,13 @@ const resolveScore = (item: GuestFoundationReviewItem): number => {
 	return 0;
 };
 
-const toVocabCard = (item: GuestFoundationReviewItem): VocabCard => {
-	const foundationCard = foundation2kDeck[item.frequencyRank - 1];
+const toVocabCard = (
+	item: GuestFoundationReviewItem,
+	locale: AppLocale = "fr",
+): VocabCard => {
+	const foundationDeck = getFoundation2kDeck(locale);
+	const foundationCard =
+		foundationDeck[item.frequencyRank - 1] ?? foundation2kDeck[item.frequencyRank - 1];
 	const tags = foundationCard.category
 		? foundationCard.category
 				.split(",")
@@ -268,9 +274,12 @@ const toVocabCard = (item: GuestFoundationReviewItem): VocabCard => {
 
 export const getGuestFoundationRows = (
 	scope?: string | null,
+	locale: AppLocale = "fr",
 ): SearchCardsV2Row[] =>
 	loadState(scope).items.map((item) => {
-		const foundationCard = foundation2kDeck[item.frequencyRank - 1];
+		const foundationDeck = getFoundation2kDeck(locale);
+		const foundationCard =
+			foundationDeck[item.frequencyRank - 1] ?? foundation2kDeck[item.frequencyRank - 1];
 
 		return {
 			category: foundationCard.category,
@@ -298,6 +307,7 @@ export const getGuestFoundationDueCount = (
 export const getGuestFoundationDueCards = (
 	scope?: string | null,
 	now = Date.now(),
+	locale: AppLocale = "fr",
 ): VocabCard[] =>
 	loadState(scope)
 		.items.filter((item) => isDueAt(item.nextReviewAt, now))
@@ -310,7 +320,7 @@ export const getGuestFoundationDueCards = (
 
 			return left.frequencyRank - right.frequencyRank;
 		})
-		.map(toVocabCard);
+		.map((item) => toVocabCard(item, locale));
 
 export const submitGuestFoundationReview = (
 	cardId: string,

@@ -203,8 +203,8 @@ export default function HomePage() {
 								padding: "1px 6px",
 							}}
 						>
-							<option value="fr">French</option>
-							<option value="en">English</option>
+							<option value="fr">french</option>
+							<option value="en">english</option>
 						</select>
 					</label>
 					<span aria-hidden="true">&middot;</span>

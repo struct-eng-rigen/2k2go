@@ -1,8 +1,9 @@
 import type { PostgrestError } from "@supabase/supabase-js";
-import { foundation2kDeck } from "@/data/foundation2kDeck";
+import { getFoundation2kDeck } from "@/data/foundation2kDeck";
 import {
 	resolvePreferredFoundationMedia,
 } from "@/lib/foundationDeckMedia";
+import type { AppLocale } from "@/lib/appLocale";
 import { resolveMediaUrl } from "@/lib/mediaUrl";
 import {
 	stripHarakat,
@@ -105,28 +106,39 @@ const normalizeFoundationWordKey = (value: unknown): string => {
 	return stripHarakat(normalizedValue).replace(/\s+/g, " ").trim();
 };
 
-const foundationDeckContentByWordKey = new Map<string, FoundationDeckContentRecord>();
+const foundationDeckContentByLocaleAndWordKey: Record<
+	AppLocale,
+	Map<string, FoundationDeckContentRecord>
+> = {
+	fr: new Map(),
+	en: new Map(),
+};
 
-foundation2kDeck.forEach((card) => {
-	const key = normalizeFoundationWordKey(card.wordAr);
-	if (!key || foundationDeckContentByWordKey.has(key)) {
-		return;
-	}
+(["fr", "en"] as AppLocale[]).forEach((locale) => {
+	getFoundation2kDeck(locale).forEach((card) => {
+		const key = normalizeFoundationWordKey(card.wordAr);
+		if (!key || foundationDeckContentByLocaleAndWordKey[locale].has(key)) {
+			return;
+		}
 
-	foundationDeckContentByWordKey.set(key, {
-		category: card.category,
-		exampleSentenceAr: card.exampleSentenceAr,
-		exampleSentenceFr: card.exampleSentenceFr,
-		wordAr: card.wordAr,
-		wordFr: card.wordFr,
+		foundationDeckContentByLocaleAndWordKey[locale].set(key, {
+			category: card.category,
+			exampleSentenceAr: card.exampleSentenceAr,
+			exampleSentenceFr: card.exampleSentenceFr,
+			wordAr: card.wordAr,
+			wordFr: card.wordFr,
+		});
 	});
 });
 
 const resolveFoundationDeckContentRecord = (
 	wordAr: string | null | undefined,
+	locale: AppLocale,
 ): FoundationDeckContentRecord | null => {
 	const key = normalizeFoundationWordKey(wordAr);
-	return key ? (foundationDeckContentByWordKey.get(key) ?? null) : null;
+	return key
+		? (foundationDeckContentByLocaleAndWordKey[locale].get(key) ?? null)
+		: null;
 };
 
 const hasMissingReviewCardMedia = (card: VocabCard): boolean =>
@@ -310,6 +322,7 @@ const enrichDueRowsWithResolvedMedia = async (
 const hydrateReviewCardsWithResolvedMedia = async (
 	client: ReviewDataClient,
 	cards: VocabCard[],
+	locale: AppLocale = "fr",
 ): Promise<VocabCard[]> => {
 	const cardsNeedingHydration = cards.filter(hasMissingReviewCardMedia);
 	if (cardsNeedingHydration.length === 0) {
@@ -353,6 +366,7 @@ const hydrateReviewCardsWithResolvedMedia = async (
 
 			const foundationContent = resolveFoundationDeckContentRecord(
 				foundationWordAr,
+				locale,
 			);
 			const foundationSentenceAr =
 				toOptionalNonEmptyString(card.sentFull) ??
@@ -393,17 +407,17 @@ const hydrateReviewCardsWithResolvedMedia = async (
 				vocabBase:
 					toOptionalNonEmptyString(card.vocabBase) ?? stripHarakat(resolvedVocabFull),
 				vocabDef:
+					toOptionalNonEmptyString(foundationContent?.wordFr) ??
 					toOptionalNonEmptyString(card.vocabDef) ??
 					toOptionalNonEmptyString(canonicalCardRow?.translation) ??
-					toOptionalNonEmptyString(foundationContent?.wordFr) ??
 					card.vocabDef,
 				sentFull: resolvedSentFull,
 				sentBase:
 					toOptionalNonEmptyString(card.sentBase) ?? stripHarakat(resolvedSentFull),
 				sentFrench:
+					toOptionalNonEmptyString(foundationContent?.exampleSentenceFr) ??
 					toOptionalNonEmptyString(card.sentFrench) ??
 					toOptionalNonEmptyString(canonicalCardRow?.example_translation) ??
-					toOptionalNonEmptyString(foundationContent?.exampleSentenceFr) ??
 					card.sentFrench,
 				image: buildResolvedMediaValue({
 					existingValue: card.image,
@@ -537,6 +551,7 @@ const hydrateReviewCardsWithResolvedMedia = async (
 export async function fetchDueCardsByReviewTypes(
 	reviewTypes: ReviewType[],
 	limitPerScope = 40,
+	locale: AppLocale = "fr",
 ): Promise<ServiceResult<VocabCard[]>> {
 	const client = resolveClient();
 	if (!client) {
@@ -573,7 +588,7 @@ export async function fetchDueCardsByReviewTypes(
 			});
 
 			rows.forEach((row) => {
-				const card = supabaseCardToVocabCard(row, 0);
+				const card = supabaseCardToVocabCard(row, 0, locale);
 				const reviewType = mapCardToReviewType(card);
 				if (!reviewType || !selectedTypes.has(reviewType)) {
 					return;
@@ -603,13 +618,17 @@ export async function fetchDueCardsByReviewTypes(
 						return;
 					}
 
-					const card = supabaseCardToVocabCard(record, runningIndex);
+					const card = supabaseCardToVocabCard(record, runningIndex, locale);
 					runningIndex += 1;
 					cards.push(card);
 				});
 			});
 
-			const hydratedCards = await hydrateReviewCardsWithResolvedMedia(client, cards);
+			const hydratedCards = await hydrateReviewCardsWithResolvedMedia(
+				client,
+				cards,
+				locale,
+			);
 			const orderedCards = orderFoundationCardsByFocus(hydratedCards);
 			return {
 				cards: orderedCards,
@@ -868,7 +887,7 @@ export async function fetchDueCardsByReviewTypes(
 					return;
 				}
 
-				const card = supabaseCardToVocabCard(record, runtimeIndex);
+				const card = supabaseCardToVocabCard(record, runtimeIndex, locale);
 				const reviewType = mapCardToReviewType(card);
 				if (!reviewType || !selectedTypes.has(reviewType)) {
 					return;
@@ -881,6 +900,7 @@ export async function fetchDueCardsByReviewTypes(
 			const hydratedRuntimeCards = await hydrateReviewCardsWithResolvedMedia(
 				client,
 				runtimeCards,
+				locale,
 			);
 			const orderedRuntimeCards = orderFoundationCardsByFocus(hydratedRuntimeCards);
 
