@@ -4178,15 +4178,13 @@ export default function AppPage() {
 	const sessionFooter = isSessionPage ? (
 		<div
 			style={{
-				position: "fixed",
-				left: "50%",
-				bottom: "18px",
-				transform: "translateX(-50%)",
-				zIndex: 100,
+				alignSelf: "center",
+				flexShrink: 0,
 				display: "flex",
 				flexDirection: "column",
 				alignItems: "center",
 				gap: "4px",
+				marginTop: "8px",
 				fontFamily: "Arial, sans-serif",
 				fontSize: "13.3333px",
 				lineHeight: 1.35,
@@ -4316,19 +4314,28 @@ export default function AppPage() {
 		return (
 			<main style={appV2MainStyle}>
 				<AppV2ToastSuppressionStyle />
-				<div style={{ height: "100dvh", minHeight: "100vh", paddingBottom: "112px" }}>
-					<Suspense fallback={<AppV2SectionLoading />}>
-					<LazyCardsReview
-							isPreviewMode
-							forceLiveSubmission
-							sessionChromeVariant="plain_html"
-							onBackClick={() => {
-								navigate(APP_V2_BASE_PATH);
-							}}
-						/>
-					</Suspense>
+				<div
+					style={{
+						minHeight: "100dvh",
+						display: "flex",
+						flexDirection: "column",
+						paddingBottom: "18px",
+					}}
+				>
+					<div style={{ flex: "1 0 auto" }}>
+						<Suspense fallback={<AppV2SectionLoading />}>
+							<LazyCardsReview
+								isPreviewMode
+								forceLiveSubmission
+								sessionChromeVariant="plain_html"
+								onBackClick={() => {
+									navigate(APP_V2_BASE_PATH);
+								}}
+							/>
+						</Suspense>
+					</div>
+					{sessionFooter}
 				</div>
-				{sessionFooter}
 			</main>
 		);
 	}

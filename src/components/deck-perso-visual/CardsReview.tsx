@@ -3603,8 +3603,10 @@ export const CardsReview = ({
 	return (
 		<div
 			className={cn(
-				"relative flex h-full min-h-0 w-full flex-col items-center overflow-hidden",
-				isSessionLayout ? "bg-transparent" : "bg-background",
+				"relative flex w-full flex-col items-center",
+				isSessionLayout
+					? "min-h-[calc(100dvh-112px)] overflow-visible bg-transparent"
+					: "h-full min-h-0 overflow-hidden bg-background",
 			)}
 			style={
 				usePlainHtmlSessionChrome
@@ -3639,16 +3641,18 @@ export const CardsReview = ({
 			{/* Content wrapper */}
 			<div
 				className={cn(
-					"relative z-10 flex h-full min-h-0 w-full flex-1 flex-col",
-					isSessionLayout ? "overflow-visible" : "overflow-hidden",
+					"relative z-10 flex w-full flex-col",
+					isSessionLayout
+						? "overflow-visible"
+						: "h-full min-h-0 flex-1 overflow-hidden",
 				)}
 			>
 				{/* Main Content Container */}
 				<div
-					className={`flex min-h-0 w-full flex-1 flex-col px-3 py-2 sm:px-4 sm:py-2 ${
+					className={`flex w-full flex-col px-3 py-2 sm:px-4 sm:py-2 ${
 						isSessionLayout
 							? "items-stretch justify-start"
-							: "items-center justify-center"
+							: "min-h-0 flex-1 items-center justify-center"
 					}`}
 				>
 					{isSessionLayout ? (
