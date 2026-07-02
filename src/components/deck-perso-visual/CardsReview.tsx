@@ -63,6 +63,10 @@ import {
 import type { BinaryReviewRating } from "@/services/deckPersoService";
 import type { FriendListItem } from "@/services/friendsService";
 const ALL_REVIEW_TYPES: ReviewType[] = ["foundation", "collected", "sent"];
+const APP_PUBLIC_BASE_PATH = (import.meta.env.BASE_URL ?? "/").replace(
+	/\/+$/,
+	"",
+);
 
 function resolveCardReviewType(
 	card: Pick<VocabCard, "source" | "tags" | "sourceType">,
@@ -3511,7 +3515,7 @@ export const CardsReview = ({
 			</label>
 
 			<a
-				href="/app/why-2000-to-go"
+				href={`${APP_PUBLIC_BASE_PATH}/app/why-2000-to-go`}
 				target="_blank"
 				rel="noreferrer"
 				data-tutorial="review-docs-link"
@@ -3534,7 +3538,7 @@ export const CardsReview = ({
 				how do I do my reviews?
 			</a>
 			<a
-				href="/feedback"
+				href={`${APP_PUBLIC_BASE_PATH}/feedback`}
 				target="_blank"
 				rel="noreferrer"
 				className={
@@ -3605,7 +3609,7 @@ export const CardsReview = ({
 			className={cn(
 				"relative flex w-full flex-col items-center",
 				isSessionLayout
-					? "min-h-[calc(100dvh-112px)] overflow-visible bg-transparent"
+					? "overflow-visible bg-transparent"
 					: "h-full min-h-0 overflow-hidden bg-background",
 			)}
 			style={
@@ -3743,6 +3747,7 @@ export const CardsReview = ({
 						</p>
 					)}
 					{renderReviewSummarySection()}
+					{renderSessionLanguageAndHelpSection()}
 				</div>
 			</div>
 

@@ -3657,7 +3657,7 @@ function AppV2ContactsPage({
 }
 
 export default function AppPage() {
-	const { locale, setLocale } = useAppLocale();
+	const { locale } = useAppLocale();
 	const isEnglish = locale === "en";
 	const [isButtonHovered, setIsButtonHovered] = useState(false);
 	const [contentRef, contentWidth] = usePretextContainerWidth<HTMLDivElement>();
@@ -4166,74 +4166,6 @@ export default function AppPage() {
 		void trackUniqueVisitor();
 	}, [isSessionPage, user?.id]);
 
-	const handleSessionLocaleChange = (nextLocale: "fr" | "en") => {
-		if (nextLocale === locale) {
-			return;
-		}
-
-		setLocale(nextLocale);
-		window.location.reload();
-	};
-
-	const sessionFooter = isSessionPage ? (
-		<div
-			style={{
-				alignSelf: "center",
-				flexShrink: 0,
-				display: "flex",
-				flexDirection: "column",
-				alignItems: "center",
-				gap: "4px",
-				marginTop: "8px",
-				fontFamily: "Arial, sans-serif",
-				fontSize: "13.3333px",
-				lineHeight: 1.35,
-				color: "#000000",
-				backgroundColor: "#f7f6f2",
-				padding: "2px 8px",
-			}}
-		>
-			<label>
-				language :{" "}
-				<select
-					value={locale}
-					onChange={(event) => {
-						handleSessionLocaleChange(
-							event.target.value === "fr" ? "fr" : "en",
-						);
-					}}
-					style={{
-						font: "inherit",
-						color: "inherit",
-						backgroundColor: "#efefef",
-						border: "1px solid #000000",
-						borderRadius: "3px",
-						padding: "1px 6px",
-					}}
-				>
-					<option value="en">english</option>
-					<option value="fr">french</option>
-				</select>
-			</label>
-			<a
-				href={`${APP_PUBLIC_BASE_PATH}${APP_V2_BASE_PATH}/why-2000-to-go`}
-				target="_blank"
-				rel="noreferrer"
-				style={plainLinkStyle}
-			>
-				how do I do my reviews?
-			</a>
-			<a
-				href={`${APP_PUBLIC_BASE_PATH}/feedback`}
-				target="_blank"
-				rel="noreferrer"
-				style={plainLinkStyle}
-			>
-				bug report/feedback
-			</a>
-		</div>
-	) : null;
-
 	useEffect(() => {
 		if (!user?.id) {
 			setAdminUniqueVisitorsTotal(0);
@@ -4314,28 +4246,16 @@ export default function AppPage() {
 		return (
 			<main style={appV2MainStyle}>
 				<AppV2ToastSuppressionStyle />
-				<div
-					style={{
-						minHeight: "100dvh",
-						display: "flex",
-						flexDirection: "column",
-						paddingBottom: "18px",
-					}}
-				>
-					<div style={{ flex: "1 0 auto" }}>
-						<Suspense fallback={<AppV2SectionLoading />}>
-							<LazyCardsReview
-								isPreviewMode
-								forceLiveSubmission
-								sessionChromeVariant="plain_html"
-								onBackClick={() => {
-									navigate(APP_V2_BASE_PATH);
-								}}
-							/>
-						</Suspense>
-					</div>
-					{sessionFooter}
-				</div>
+				<Suspense fallback={<AppV2SectionLoading />}>
+					<LazyCardsReview
+						isPreviewMode
+						forceLiveSubmission
+						sessionChromeVariant="plain_html"
+						onBackClick={() => {
+							navigate(APP_V2_BASE_PATH);
+						}}
+					/>
+				</Suspense>
 			</main>
 		);
 	}
