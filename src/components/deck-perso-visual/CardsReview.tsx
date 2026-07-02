@@ -3460,93 +3460,112 @@ export const CardsReview = ({
 					</button>
 				</div>
 
-				<label
-					className={
-						usePlainHtmlSessionChrome
-							? "mt-1"
-							: "mt-1 text-[11px] text-muted-foreground opacity-70"
-					}
-					style={
-						usePlainHtmlSessionChrome
-							? {
-									fontSize: "13.3333px",
-									fontFamily: "Arial, sans-serif",
-									color: "#000000",
-							  }
-							: undefined
-					}
-				>
-					language :{" "}
-					<select
-						value={locale}
-						onChange={(event) => {
-							handleSessionLocaleChange(
-								event.target.value === "fr" ? "fr" : "en",
-							);
-						}}
-						style={
-							usePlainHtmlSessionChrome
-								? {
-										font: "inherit",
-										color: "inherit",
-										backgroundColor: "#efefef",
-										border: "1px solid #000000",
-										borderRadius: "3px",
-										padding: "1px 6px",
-								  }
-								: undefined
-						}
-					>
-						<option value="fr">french</option>
-						<option value="en">english</option>
-					</select>
-				</label>
 
-				<a
-					href="/app/why-2000-to-go"
-					target="_blank"
-					rel="noreferrer"
-					data-tutorial="review-docs-link"
-					className={
-						usePlainHtmlSessionChrome
-							? "mt-1"
-							: "mt-1 text-[11px] text-muted-foreground underline underline-offset-2 decoration-muted-foreground/60 opacity-70 transition-colors hover:text-foreground"
-					}
+				{!isSessionLayout ? renderLanguageAndHelpLinks() : null}
+			</div>
+		);
+	};
+
+	const renderLanguageAndHelpLinks = () => (
+		<>
+			<label
+				className={
+					usePlainHtmlSessionChrome
+						? "mt-1"
+						: "mt-1 text-[11px] text-muted-foreground opacity-70"
+				}
+				style={
+					usePlainHtmlSessionChrome
+						? {
+								fontSize: "13.3333px",
+								fontFamily: "Arial, sans-serif",
+								color: "#000000",
+						  }
+						: undefined
+				}
+			>
+				language :{" "}
+				<select
+					value={locale}
+					onChange={(event) => {
+						handleSessionLocaleChange(
+							event.target.value === "fr" ? "fr" : "en",
+						);
+					}}
 					style={
 						usePlainHtmlSessionChrome
 							? {
-									fontSize: "13.3333px",
-									fontFamily: "Arial, sans-serif",
-									color: "#000000",
-									textDecoration: "underline",
-								}
-							: undefined
-					}
-				>
-					how do I do my reviews?
-				</a>
-				<a
-					href="/feedback"
-					target="_blank"
-					rel="noreferrer"
-					className={
-						usePlainHtmlSessionChrome
-							? "mt-1"
-							: "mt-1 text-[11px] text-muted-foreground underline underline-offset-2 decoration-muted-foreground/60 opacity-70 transition-colors hover:text-foreground"
-					}
-					style={
-						usePlainHtmlSessionChrome
-							? {
-									fontSize: "13.3333px",
-									fontFamily: "Arial, sans-serif",
-									color: "#000000",
-									textDecoration: "underline",
+									font: "inherit",
+									color: "inherit",
+									backgroundColor: "#efefef",
+									border: "1px solid #000000",
+									borderRadius: "3px",
+									padding: "1px 6px",
 							  }
 							: undefined
 					}
 				>
-					bug report/feedback
-				</a>
+					<option value="en">english</option>
+					<option value="fr">french</option>
+				</select>
+			</label>
+
+			<a
+				href="/app/why-2000-to-go"
+				target="_blank"
+				rel="noreferrer"
+				data-tutorial="review-docs-link"
+				className={
+					usePlainHtmlSessionChrome
+						? "mt-1"
+						: "mt-1 text-[11px] text-muted-foreground underline underline-offset-2 decoration-muted-foreground/60 opacity-70 transition-colors hover:text-foreground"
+				}
+				style={
+					usePlainHtmlSessionChrome
+						? {
+								fontSize: "13.3333px",
+								fontFamily: "Arial, sans-serif",
+								color: "#000000",
+								textDecoration: "underline",
+							}
+						: undefined
+				}
+			>
+				how do I do my reviews?
+			</a>
+			<a
+				href="/feedback"
+				target="_blank"
+				rel="noreferrer"
+				className={
+					usePlainHtmlSessionChrome
+						? "mt-1"
+						: "mt-1 text-[11px] text-muted-foreground underline underline-offset-2 decoration-muted-foreground/60 opacity-70 transition-colors hover:text-foreground"
+				}
+				style={
+					usePlainHtmlSessionChrome
+						? {
+								fontSize: "13.3333px",
+								fontFamily: "Arial, sans-serif",
+								color: "#000000",
+								textDecoration: "underline",
+						  }
+						: undefined
+				}
+			>
+				bug report/feedback
+			</a>
+		</>
+	);
+
+	const renderSessionLanguageAndHelpSection = () => {
+		if (!isSessionLayout) {
+			return null;
+		}
+
+		return (
+			<div className="mt-5 flex flex-col items-center pt-1 sm:mt-4">
+				{renderLanguageAndHelpLinks()}
 			</div>
 		);
 	};
