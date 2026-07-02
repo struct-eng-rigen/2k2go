@@ -20,6 +20,7 @@ supabase/functions/*
 !supabase/migrations/
 supabase/migrations/*
 !supabase/migrations/20260412_deck_download_events_v1.sql
+!supabase/migrations/20260702_security_hardening_v1.sql
 supabase/.temp/
 scripts/translate_foundation_deck_deepl.py
 tmp_public_schema.sql

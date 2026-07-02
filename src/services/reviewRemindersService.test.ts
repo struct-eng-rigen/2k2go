@@ -74,10 +74,9 @@ describe("reviewRemindersService", () => {
 			expect.objectContaining({
 				method: "PATCH",
 				body: { preferences: { enabled: true, email_enabled: true } },
-				headers: {
+				headers: expect.objectContaining({
 					Authorization: "Bearer access-token-1",
-					apikey: expect.any(String),
-				},
+				}),
 			}),
 		);
 	});

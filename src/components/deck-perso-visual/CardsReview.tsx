@@ -1221,7 +1221,7 @@ export const CardsReview = ({
 	const showSessionCardAudioControls =
 		isSessionLayout &&
 		!isAuthLoading &&
-		(Boolean(user?.id) ? isCardAudioSupported : Boolean(cardData));
+		(user?.id ? isCardAudioSupported : Boolean(cardData));
 	const currentCardAudioSelectionKey = cardData
 		? buildSessionCardAudioCacheKey(cardData)
 		: null;
